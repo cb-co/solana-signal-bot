@@ -1,4 +1,5 @@
-import { TelegramClient, events } from 'telegram';
+import { TelegramClient } from 'telegram';
+import { NewMessage } from 'telegram/events/index.js';
 import { StringSession } from 'telegram/sessions/index.js';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import axios from 'axios';
@@ -45,5 +46,5 @@ export async function startListener() {
     } catch (err) {
       console.error('Webhook POST failed:', err.message);
     }
-  }, new events.NewMessage({}));
+  }, new NewMessage({}));
 }

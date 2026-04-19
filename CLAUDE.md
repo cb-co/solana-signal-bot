@@ -39,8 +39,9 @@ for AI scoring and automated buying via Trojan bot.
 
 ## Notes
 ## gramjs import style
-Use named imports from the 'telegram' package:
-  import { TelegramClient, events } from 'telegram';
+Use named imports from submodule paths — do NOT destructure from the default export:
+  import { TelegramClient } from 'telegram';
+  import { NewMessage } from 'telegram/events/index.js';
   import { StringSession } from 'telegram/sessions/index.js';
-Do not use require() or default imports.
+Use: new NewMessage({})  — not new events.NewMessage({})
 
