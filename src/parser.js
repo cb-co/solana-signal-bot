@@ -11,20 +11,29 @@ function parseDollar(str) {
   return val;
 }
 
-export function parseTokenAlert(text) {
+function addrFromUrls(urls) {
+  for (const url of urls) {
+    const m = url.match(/geckoterminal\.com\/solana\/tokens\/([A-Za-z0-9]{32,44})/) ||
+              url.match(/fakevol_([A-Za-z0-9]{32,44})/) ||
+              url.match(/bundle_([A-Za-z0-9]{32,44})/) ||
+              url.match(/first20_([A-Za-z0-9]{32,44})/);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+// entityUrls: URLs from Telegram MessageEntityTextUrl objects.
+// Real messages carry URLs as hyperlink entities, not inline text.
+export function parseTokenAlert(text, entityUrls = []) {
   if (!text || typeof text !== 'string') return null;
 
   const get = (re, g = 1) => { const m = text.match(re); return m ? m[g] : null; };
 
-  // tokenName — between fire emoji and Soul_Sniper_Bot URL
-  const nameRaw = get(/🔥[\s\u200e\u200f\u200b]*(.+?)\s*\(https?:\/\/t\.me\/Soul_Sniper_Bot/);
+  const nameRaw = get(/🔥[\s\u200e\u200f\u200b]*(.+?)\s+New Trending/);
   const tokenName = nameRaw ? nameRaw.trim() : null;
+  if (!tokenName) return null;
 
-  // tokenAddress — GeckoTerminal URL is the most explicit source
-  const tokenAddress =
-    get(/geckoterminal\.com\/solana\/tokens\/([A-Za-z0-9]{32,44})/) ||
-    get(/fakevol_([A-Za-z0-9]{32,44})/) ||
-    get(/bundle_([A-Za-z0-9]{32,44})/);
+  const tokenAddress = addrFromUrls(entityUrls);
 
   const ageMinutes = (() => { const v = get(/Age:\s*(\d+)m/); return v !== null ? parseInt(v, 10) : null; })();
 
@@ -35,22 +44,19 @@ export function parseTokenAlert(text) {
   const liquidity = parseDollar(get(/Liq:\s*\$([0-9,]+(?:\.\d+)?[KkMmBb]?)/));
   const volume1h = parseDollar(get(/Vol:\s*1h:\s*\$([0-9,]+(?:\.\d+)?[KkMmBb]?)/));
 
-  const fakeBase = /Fake\s+\(https?:\/\/[^)]+\):\s*\$([0-9,]+(?:\.\d+)?[KkMmBb]?)/;
-  const fakeUSDM = text.match(fakeBase);
+  const fakeUSDM = text.match(/Fake:\s*\$([0-9,]+(?:\.\d+)?[KkMmBb]?)/);
   const fakeVolUSD = fakeUSDM ? parseDollar(fakeUSDM[1]) : null;
-  const fakePctM = text.match(/Fake\s+\(https?:\/\/[^)]+\):\s*\$[^\[]*\[([0-9.]+)%\]/);
+  const fakePctM = text.match(/Fake:\s*\$[^\[]*\[([0-9.]+)%\]/);
   const fakeVolPct = fakePctM ? parseFloat(fakePctM[1]) : null;
 
   const holderCount = (() => { const v = get(/Hodls:\s*(\d+)/); return v !== null ? parseInt(v, 10) : null; })();
 
-  const bndM = text.match(/Bundles\s+\(https?:\/\/[^)]+\):\s*(\d+)\s*•\s*(\d+(?:\.\d+)?)%\s*→\s*(\d+(?:\.\d+)?)%/);
+  const bndM = text.match(/Bundles:\s*(\d+)\s*•\s*(\d+(?:\.\d+)?)%\s*→\s*(\d+(?:\.\d+)?)%/);
   const bundleCount = bndM ? parseInt(bndM[1], 10) : null;
   const bundlePctInitial = bndM ? parseFloat(bndM[2]) : null;
   const bundlePctCurrent = bndM ? parseFloat(bndM[3]) : null;
 
-  // "Dev: (URL) X SOL | Y% $TOKEN" format — capture Y
-  const devHoldM = text.match(/Dev(?:\s+holding)?:\s*(\d+(?:\.\d+)?)%/i) ||
-                   text.match(/SOL\s*\|\s*(\d+(?:\.\d+)?)%\s*\$/);
+  const devHoldM = text.match(/SOL\s*\|\s*(\d+(?:\.\d+)?)%\s*\$/);
   const devHoldingPct = devHoldM ? parseFloat(devHoldM[1]) : null;
 
   const devSoldM = text.match(/\bSold:\s*(\d+(?:\.\d+)?)%/i);
@@ -62,7 +68,7 @@ export function parseTokenAlert(text) {
   const burntM = text.match(/Burn(?:t|ed)?:\s*(\d+(?:\.\d+)?)%/i);
   const burntPct = burntM ? parseFloat(burntM[1]) : null;
 
-  const f20M = text.match(/First 20\s+\(https?:\/\/[^)]+\):\s*(\d+(?:\.\d+)?)%/);
+  const f20M = text.match(/First 20:\s*(\d+(?:\.\d+)?)%/);
   const first20HoldingPct = f20M ? parseFloat(f20M[1]) : null;
 
   return {

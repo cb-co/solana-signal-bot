@@ -7,8 +7,10 @@ import { parseTokenAlert } from '../src/parser.js';
 
 const FIXTURES_DIR = join(dirname(fileURLToPath(import.meta.url)), 'fixtures');
 
+// tokenAddress is excluded: real messages carry it only in entity URLs (not
+// inline text), so text-only fixture files will always have tokenAddress: null.
 const REQUIRED_FIELDS = [
-  'tokenName', 'tokenAddress', 'ageMinutes',
+  'tokenName', 'ageMinutes',
   'marketCap', 'athMarketCap', 'liquidity', 'volume1h',
   'fakeVolUSD', 'holderCount',
   'bundleCount', 'bundlePctInitial', 'bundlePctCurrent',
@@ -41,7 +43,6 @@ describe('exact values — sample-message.txt', () => {
   const r = parseTokenAlert(readFileSync(join(FIXTURES_DIR, 'sample-message.txt'), 'utf8'));
 
   it('tokenName', () => assert.equal(r.tokenName, 'MOOMOO THE BULL'));
-  it('tokenAddress', () => assert.equal(r.tokenAddress, '2Ae1YRe85ma43HaiTyPV386UX8roargpB3Mxh7vppump'));
   it('ageMinutes', () => assert.equal(r.ageMinutes, 9));
   it('marketCap', () => assert.equal(r.marketCap, 49758));
   it('athMarketCap', () => assert.equal(r.athMarketCap, 51400));
@@ -66,7 +67,11 @@ describe('exact values — sample-message.txt', () => {
 describe('edge cases', () => {
   it('returns null for empty string', () => assert.equal(parseTokenAlert(''), null));
   it('returns null for null', () => assert.equal(parseTokenAlert(null), null));
+  it('returns null for non-trending message', () => assert.equal(
+    parseTokenAlert('Stay up to date on Soul! 🌟\n\nhttps://www.instagram.com/soulterminalai 📸'),
+    null,
+  ));
   it('securityFlag true when 🚨 present', () => {
-    assert.equal(parseTokenAlert('some text 🚨 alert').securityFlag, true);
+    assert.equal(parseTokenAlert('🔥 ‎TOKEN New Trending\n🚨 Security').securityFlag, true);
   });
 });
