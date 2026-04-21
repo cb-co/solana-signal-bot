@@ -1,0 +1,16 @@
+app = "solearly-telegram-listener"
+primary_region = "ord"
+
+[build]
+
+[env]
+  SESSION_PATH = "/data/session.json"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[[mounts]]
+  source = "session_data"
+  destination = "/data"
