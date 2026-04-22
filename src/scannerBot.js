@@ -9,7 +9,18 @@ export async function initScannerBot(onResult) {
 
   client.addEventHandler(async (event) => {
     try {
-      const text = event.message.message;
+      const msg = event.message;
+      const text = msg.message;
+
+      let imageBase64 = null;
+      if (msg.media?.className === 'MessageMediaPhoto') {
+        try {
+          const buf = await client.downloadMedia(msg, { workers: 1 });
+          if (buf) imageBase64 = Buffer.from(buf).toString('base64');
+        } catch (err) {
+          console.error('Image download failed:', err.message);
+        }
+      }
 
       const address = pendingAddresses.shift();
       if (!address) {
@@ -17,7 +28,7 @@ export async function initScannerBot(onResult) {
         return;
       }
 
-      onResult({ text, address });
+      onResult({ text, address, imageBase64 });
     } catch (err) {
       console.error('Scanner bot handler error:', err.message);
     }

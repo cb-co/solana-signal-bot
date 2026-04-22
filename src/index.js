@@ -19,10 +19,10 @@ await client.start({
 writeFileSync(process.env.SESSION_PATH || './session.json', client.session.save(), 'utf8');
 console.log('Connected.');
 
-const sendToScanner = await initScannerBot(async ({ text, address }) => {
+const sendToScanner = await initScannerBot(async ({ text, address, imageBase64 }) => {
   const parsed = parseScannerReply(text, address);
   try {
-    await postToWebhook(parsed);
+    await postToWebhook({ ...parsed, imageBase64, raw: text });
   } catch (err) {
     console.error('Webhook POST failed:', err.message);
   }
