@@ -10,7 +10,6 @@ export async function initScannerBot(onResult) {
   client.addEventHandler(async (event) => {
     try {
       const text = event.message.message;
-      console.log('[soul_scanner_bot reply]\n', text);
 
       const address = pendingAddresses.shift();
       if (!address) {
