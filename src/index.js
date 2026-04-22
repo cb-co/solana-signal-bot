@@ -1,7 +1,33 @@
 import 'dotenv/config';
-import { startListener } from './listener.js';
+import { writeFileSync } from 'node:fs';
+import input from 'input';
+import { getClient } from './client.js';
+import { startChannelPoller } from './channelPoller.js';
+import { initScannerBot } from './scannerBot.js';
+import { parseScannerReply } from './parser.js';
+import { postToWebhook } from './webhook.js';
 
-startListener().catch((err) => {
-  console.error('Fatal:', err);
-  process.exit(1);
+const client = getClient();
+
+await client.start({
+  phoneNumber: () => process.env.TELEGRAM_PHONE,
+  phoneCode: () => input.text('Telegram code: '),
+  password: () => input.text('2FA password: '),
+  onError: (err) => { console.error('Auth error:', err); throw err; },
+});
+
+writeFileSync(process.env.SESSION_PATH || './session.json', client.session.save(), 'utf8');
+console.log('Connected.');
+
+const sendToScanner = await initScannerBot(async ({ text, address }) => {
+  const parsed = parseScannerReply(text, address);
+  try {
+    await postToWebhook(parsed);
+  } catch (err) {
+    console.error('Webhook POST failed:', err.message);
+  }
+});
+
+await startChannelPoller((address) => {
+  sendToScanner(address).catch(err => console.error('Scanner send failed:', err.message));
 });

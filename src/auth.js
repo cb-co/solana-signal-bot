@@ -1,18 +1,9 @@
 import 'dotenv/config';
-import { TelegramClient } from 'telegram';
-import { StringSession } from 'telegram/sessions/index.js';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import input from 'input';
+import { getClient } from './client.js';
 
-const sessionPath = process.env.SESSION_PATH || './session.json';
-const sessionStr = existsSync(sessionPath) ? readFileSync(sessionPath, 'utf8').trim() : '';
-
-const client = new TelegramClient(
-  new StringSession(sessionStr),
-  Number(process.env.TELEGRAM_API_ID),
-  process.env.TELEGRAM_API_HASH,
-  { connectionRetries: 5 },
-);
+const client = getClient();
 
 await client.start({
   phoneNumber: () => process.env.TELEGRAM_PHONE,
@@ -21,7 +12,7 @@ await client.start({
   onError: (err) => { console.error('Auth error:', err); throw err; },
 });
 
-writeFileSync(sessionPath, client.session.save(), 'utf8');
-console.log('Session saved to', sessionPath);
+writeFileSync(process.env.SESSION_PATH || './session.json', client.session.save(), 'utf8');
+console.log('Session saved to', process.env.SESSION_PATH || './session.json');
 await client.disconnect();
 process.exit(0);
