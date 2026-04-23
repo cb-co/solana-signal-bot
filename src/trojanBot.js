@@ -32,14 +32,26 @@ export async function initTrojanBot() {
       }
 
       const target = String(snapToButton(pending.amount_sol));
-      const button = flat.find(b => b.text?.includes(target));
-      if (!button) {
+      const amountBtn = flat.find(b => b.text?.includes(target));
+      if (!amountBtn) {
         console.error('[trojan] No matching button for amount:', pending.amount_sol);
         return;
       }
 
-      console.log(`[trojan] Buying ${pending.tokenAddress} — clicking "${button.text}"`);
-      await button.click({});
+      console.log(`[trojan] Clicking "${amountBtn.text}" then BUY for ${pending.tokenAddress}`);
+      await amountBtn.click({});
+
+      // Re-fetch message so BUY button has fresh callback data after Trojan edits it
+      await new Promise(r => setTimeout(r, 600));
+      const [updated] = await client.getMessages(botEntity, { ids: [msg.id] });
+      const updatedBtns = await updated?.getButtons();
+      const buyBtn = updatedBtns?.flat().find(b => /^buy$/i.test(b.text?.trim()));
+      if (buyBtn) {
+        await buyBtn.click({});
+        console.log(`[trojan] BUY confirmed for ${pending.tokenAddress}`);
+      } else {
+        console.error('[trojan] BUY button not found after re-fetch');
+      }
     } catch (err) {
       console.error('[trojan] Handler error:', err.message);
     }
