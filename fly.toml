@@ -14,3 +14,9 @@ primary_region = "ord"
 [[mounts]]
   source = "session_data"
   destination = "/data"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = false

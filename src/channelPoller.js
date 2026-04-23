@@ -10,7 +10,7 @@ function extractAddress(msg) {
   for (const url of entityUrls) {
     const m =
       url.match(/geckoterminal\.com\/solana\/tokens\/([A-Za-z0-9]{32,44})/) ||
-      url.match(/[?&]start=[^_]*_([A-Za-z0-9]{32,44})/) ||
+      url.match(/[?&]start=(?:[^_&]*_)*([A-Za-z0-9]{32,44})/) ||
       url.match(/solscan\.io\/(?:token|account)\/([A-Za-z0-9]{32,44})/);
     if (m) return m[1];
   }

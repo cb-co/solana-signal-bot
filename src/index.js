@@ -6,6 +6,8 @@ import { startChannelPoller } from './channelPoller.js';
 import { initScannerBot } from './scannerBot.js';
 import { parseScannerReply } from './parser.js';
 import { postToWebhook } from './webhook.js';
+import { initTrojanBot } from './trojanBot.js';
+import { startBuyServer } from './buyServer.js';
 
 const client = getClient();
 
@@ -31,3 +33,6 @@ const sendToScanner = await initScannerBot(async ({ text, address, imageBase64 }
 await startChannelPoller((address) => {
   sendToScanner(address).catch(err => console.error('Scanner send failed:', err.message));
 });
+
+const executeBuy = await initTrojanBot();
+startBuyServer(executeBuy);

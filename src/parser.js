@@ -12,16 +12,18 @@ function parseDollar(str) {
 }
 
 function parseAgeMinutes(text) {
-  const m = text.match(/Age:\s*(\d+)(m|h|d|mo)\b/);
-  if (!m) return null;
-  const val = parseInt(m[1], 10);
-  switch (m[2]) {
-    case 'm':  return val;
-    case 'h':  return val * 60;
-    case 'd':  return val * 24 * 60;
-    case 'mo': return val * 30 * 24 * 60;
-    default:   return null;
+  const segment = text.match(/Age:\s*(.+?)(?:\s*\[|$)/m);
+  if (!segment) return null;
+  const ageStr = segment[1].trim();
+  let total = 0;
+  const units = { y: 365 * 24 * 60, mo: 30 * 24 * 60, d: 24 * 60, h: 60, m: 1 };
+  // Match all "NUNit" tokens, longest unit suffix first to avoid 'm' matching 'mo'
+  const re = /(\d+)\s*(mo|y|d|h|m)\b/g;
+  let match;
+  while ((match = re.exec(ageStr)) !== null) {
+    total += parseInt(match[1], 10) * (units[match[2]] ?? 0);
   }
+  return total > 0 ? total : null;
 }
 
 export function parseScannerReply(text, address) {
@@ -44,7 +46,7 @@ export function parseScannerReply(text, address) {
 
   const marketCap = parseDollar(get(/MC:\s*\$([0-9,]+(?:\.\d+)?[KkMmBb]?)/));
   const athMarketCap = parseDollar(get(/🔝\s*\$([0-9,]+(?:\.\d+)?[KkMmBb]?)/));
-  const liquidity = parseDollar(get(/Liq:\s*\$([0-9,]+(?:\.\d+)?[KkMmBb]?)/));
+  const liquidity = parseDollar(get(/v?Liq:\s*\$([0-9,]+(?:\.\d+)?[KkMmBb]?)/));
   const volume1h = parseDollar(get(/Vol:\s*\$([0-9,]+(?:\.\d+)?[KkMmBb]?)/));
 
   // Fake volume: "Fake: $3.2K [0.7%]"
